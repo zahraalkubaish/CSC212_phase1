@@ -32,6 +32,7 @@ public class Rider extends Person implements IRider {
     }
 
     // Orders riders strictly by ID
+    @Override
     public int compareTo(IRider other) {
         if (getId() < other.getId())
             return -1;
