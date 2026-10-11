@@ -1,9 +1,7 @@
-/**
- * Custom doubly linked list (java.util is not allowed in this project).
- * Source: Lecture11_DLL slides 9-81, plus a size counter (ADT List slide 177).
- * The list keeps a "current" pointer: insert adds AFTER current,
- * and remove deletes current.
- */
+
+// Doubly linked list. It keeps a "current" pointer: insert works AFTER current,
+// remove works ON current.
+
 public class LinkedList<T> implements List<T> {
     private Node<T> head;     // first node of the list
     private Node<T> current;  // node the list is currently pointing at
@@ -104,3 +102,4 @@ public class LinkedList<T> implements List<T> {
         return size;
     }
 }
+
