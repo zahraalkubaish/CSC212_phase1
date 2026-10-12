@@ -1,136 +1,272 @@
 /**
- * Linked list of rides kept in alphabetical order by pickup location.
+ * RiderList: stores riders in a linked list kept in sorted order by rider ID.
+ * Uses composition over LinkedList<IRider>.
  */
-public class RideList implements IRideList {
-    private LinkedList<IRide> rides;   // sorted by pickup location
+public class RiderList implements IRiderList {
 
-    public RideList() {
-        rides = new LinkedList<IRide>();
+    // The internal linked list. Sorted by rider ID (ascending).
+    private LinkedList<IRider> riders;
+
+    public RiderList() {
+        riders = new LinkedList<IRider>();
     }
 
-    // Inserts the ride in alphabetical order; fails for null or a repeated ride ID
-    public boolean addRide(IRide ride) {
-        if (ride == null || containsRideId(ride.getRideId()))
+    // ---------------------------------------------------------------
+    // add: inserts in sorted order by ID. Rejects duplicates.
+    // Uses findById for the duplicate check, then walks to the
+    // insertion point (no inline duplicate checks needed).
+    // Time: O(n). 
+    // ---------------------------------------------------------------
+    public boolean add(IRider rider) {
+
+        if (rider == null) {
             return false;
-        if (rides.empty()) {
-            rides.insert(ride);
+        }
+
+        // Duplicate check: O(n). After this, we KNOW no duplicate exists.
+        if (findById(rider.getId()) != null) {
+            return false;
+        }
+
+        // Empty list: rider becomes the head.
+        if (riders.empty()) {
+            riders.insert(rider);
             return true;
         }
-        rides.findFirst();
-        while (true) {
-            if (rides.retrieve().compareTo(ride) > 0) {
-                IRide later = rides.retrieve();
-                rides.update(ride);       // the new ride takes this place
-                rides.insert(later);      // the later ride is pushed right after it
-                return true;
-            }
-            if (rides.last()) {           // every ride comes before: append at the end
-                rides.insert(ride);
-                return true;
-            }
-            rides.findNext();
-        }
-    }
 
-    // Removes the ride with this ID; returns false if it does not exist
-    public boolean removeRideById(int rideId) {
-        if (rides.empty())
-            return false;
-        rides.findFirst();
-        while (true) {
-            if (rides.retrieve().getRideId() == rideId) {
-                rides.remove();
-                return true;
-            }
-            if (rides.last())
-                return false;
-            rides.findNext();
-        }
-    }
+        riders.findFirst();
+        int headId = riders.retrieve().getId();
 
-    // Returns a new list with every ride (already alphabetical): O(n)
-    public LinkedList<IRide> getAllAlphabetically() {
-        LinkedList<IRide> result = new LinkedList<IRide>();
-        if (rides.empty())
-            return result;
-        rides.findFirst();
-        while (true) {
-            result.insert(rides.retrieve());
-            if (rides.last())
+        // Insert at head via update + insert trick:
+        //   update() replaces head's data with the new rider,
+        //   insert() puts the old head right after it.
+        if (rider.getId() < headId) {
+            IRider oldHead = riders.retrieve();
+            riders.update(rider);        // head now holds the new rider
+            riders.insert(oldHead);      // old head goes right after it
+            return true;
+        }
+
+        // Walk to the insertion point. Since we already ruled out duplicates,
+        // we only need to find the first node with id > rider.id.
+        while (!riders.last()) {
+            riders.findNext();
+            int nextId = riders.retrieve().getId();
+            if (nextId > rider.getId()) {
+                riders.findPrevious();
                 break;
-            rides.findNext();
+            }
         }
-        return result;
+
+        riders.insert(rider);
+        return true;
     }
 
-    public LinkedList<IRide> findByPickupLocation(String pickupLocation) {
-        LinkedList<IRide> result = new LinkedList<IRide>();
-        if (pickupLocation == null || rides.empty())
-            return result;
-        rides.findFirst();
-        while (true) {
-            IRide r = rides.retrieve();
-            if (r.getPickupLocation().equals(pickupLocation))
-                result.insert(r);
-            if (rides.last())
-                break;
-            rides.findNext();
-        }
-        return result;
-    }
-
-    // Returns every ride (private or shared) that involves a rider with this full name
-    public LinkedList<IRide> findByRiderName(String riderFullName) {
-        LinkedList<IRide> result = new LinkedList<IRide>();
-        if (riderFullName == null || rides.empty())
-            return result;
-        rides.findFirst();
-        while (true) {
-            IRide r = rides.retrieve();
-            if (involvesRiderNamed(r, riderFullName))
-                result.insert(r);
-            if (rides.last())
-                break;
-            rides.findNext();
-        }
-        return result;
-    }
-
+    // ---------------------------------------------------------------
+    // size: returns number of stored riders. O(1).
+    // ---------------------------------------------------------------
     public int size() {
-        return rides.size();
+        return riders.size();
     }
 
-    // True if some ride in the list already has this ride ID
-    private boolean containsRideId(int rideId) {
-        if (rides.empty())
-            return false;
-        rides.findFirst();
+    // ---------------------------------------------------------------
+    // findById: returns the rider with the given ID, or null.
+    // Exploits sorted order for early stop. Time: O(n) worst.
+    // ---------------------------------------------------------------
+    public IRider findById(int riderId) {
+        if (riders.empty())
+            return null;
+
+        riders.findFirst();
+
+        while (!riders.last()) {
+            int currentId = riders.retrieve().getId();
+            if (currentId == riderId)
+                return riders.retrieve();
+            if (currentId > riderId)
+                return null;   // early stop: sorted
+            riders.findNext();
+        }
+
+        // Check the last element (loop stops before examining it)
+        if (riders.retrieve().getId() == riderId)
+            return riders.retrieve();
+
+        return null;
+    }
+
+    // ---------------------------------------------------------------
+    // findByEmail: returns the rider with the given email, or null.
+    // Not sorted by email -> must scan whole list. Time: O(n).
+    // ---------------------------------------------------------------
+    public IRider findByEmail(String email) {
+        if (email == null || riders.empty())
+            return null;
+
+        riders.findFirst();
+
+        while (!riders.last()) {
+            IRider currentRider = riders.retrieve();
+            if (currentRider.getEmail().equals(email))
+                return currentRider;
+            riders.findNext();
+        }
+
+        if (riders.retrieve().getEmail().equals(email))
+            return riders.retrieve();
+
+        return null;
+    }
+
+    // ---------------------------------------------------------------
+    // findByName: all riders whose full name matches exactly.
+    // Time: O(n). 
+    // ---------------------------------------------------------------
+    public LinkedList<IRider> findByName(String fullName) {
+        return findAll(fullName, true);
+    }
+
+    // ---------------------------------------------------------------
+    // findByHomeCity: all riders from the given home city.
+    // Time: O(n). 
+    // ---------------------------------------------------------------
+    public LinkedList<IRider> findByHomeCity(String homeCity) {
+        return findAll(homeCity, false);
+    }
+
+    // ---------------------------------------------------------------
+    // findAll (private helper): collects every rider whose name
+    // (byName = true) or home city (byName = false) equals key.
+    // Time: O(n). 
+    // ---------------------------------------------------------------
+    private LinkedList<IRider> findAll(String key, boolean byName) {
+        LinkedList<IRider> result = new LinkedList<IRider>();
+
+        if (key == null || riders.empty())
+            return result;
+
+        riders.findFirst();
         while (true) {
-            if (rides.retrieve().getRideId() == rideId)
+            IRider r = riders.retrieve();
+            String value = byName ? r.getName() : r.getHomeCity();
+            if (value.equals(key))
+                result.insert(r);
+            if (riders.last())
+                break;
+            riders.findNext();
+        }
+        return result;
+    }
+
+    // ---------------------------------------------------------------
+    // getAll: returns a NEW list with all riders (same order).
+    // Does not expose the internal list. Time: O(n). 
+    // ---------------------------------------------------------------
+    public LinkedList<IRider> getAll() {
+        LinkedList<IRider> result = new LinkedList<IRider>();
+
+        if (riders.empty())
+            return result;
+
+        riders.findFirst();
+        while (true) {
+            result.insert(riders.retrieve());
+            if (riders.last())
+                break;
+            riders.findNext();
+        }
+        return result;
+    }
+
+    // ---------------------------------------------------------------
+    // removeById: removes the rider with the given ID.
+    // Time: O(n) worst. 
+    // ---------------------------------------------------------------
+    public boolean removeById(int riderId) {
+        if (riders.empty())
+            return false;
+
+        riders.findFirst();
+        while (true) {
+            if (riders.retrieve().getId() == riderId) {
+                riders.remove();
                 return true;
-            if (rides.last())
+            }
+            if (riders.last())
                 return false;
-            rides.findNext();
+            riders.findNext();
         }
     }
 
-    // Checks the rider of a private ride, or every participant of a shared ride
-    private boolean involvesRiderNamed(IRide ride, String fullName) {
-        if (ride instanceof IPrivateRide)
-            return ((IPrivateRide) ride).getRider().getName().equals(fullName);
-        if (ride instanceof ISharedRide) {
-            LinkedList<IRider> people = ((ISharedRide) ride).getParticipants();
-            if (people.empty())
+    // ---------------------------------------------------------------
+    // removeByEmail: removes the rider with the given email.
+    // Time: O(n) worst. 
+    // ---------------------------------------------------------------
+    public boolean removeByEmail(String email) {
+        if (email == null || riders.empty())
+            return false;
+
+        riders.findFirst();
+        while (true) {
+            if (riders.retrieve().getEmail().equals(email)) {
+                riders.remove();
+                return true;
+            }
+            if (riders.last())
                 return false;
-            people.findFirst();
-            while (true) {
-                if (people.retrieve().getName().equals(fullName))
-                    return true;
-                if (people.last())
-                    return false;
-                people.findNext();
+            riders.findNext();
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // removeByName: removes EVERY rider with this exact full name.
+    // Returns count removed. Time: O(n). 
+    // ---------------------------------------------------------------
+    public int removeByName(String fullName) {
+        return removeAll(fullName, true);
+    }
+
+    // ---------------------------------------------------------------
+    // removeByHomeCity: removes EVERY rider from this home city.
+    // Returns count removed. Time: O(n). 
+    // ---------------------------------------------------------------
+    public int removeByHomeCity(String homeCity) {
+        return removeAll(homeCity, false);
+    }
+
+    // ---------------------------------------------------------------
+    // removeAll (private helper).
+    //
+    // Key idea: remove() auto-advances current. So:
+    //   - after removal, do NOT call findNext()
+    //   - after a non-removal, we DO call findNext()
+    //   - wasLast must be captured BEFORE any modification
+    //
+    // Time: O(n).
+    // ---------------------------------------------------------------
+    private int removeAll(String key, boolean byName) {
+        int count = 0;
+
+        if (key == null || riders.empty())
+            return 0;
+
+        riders.findFirst();
+        while (true) {
+            boolean wasLast = riders.last();   // read BEFORE remove()
+            IRider r = riders.retrieve();
+            String value = byName ? r.getName() : r.getHomeCity();
+
+            if (value.equals(key)) {
+                riders.remove();
+                count++;
+                if (wasLast || riders.empty())
+                    break;
+            } else {
+                if (wasLast)
+                    break;
+                riders.findNext();
             }
         }
-        return false;
+        return count;
     }
 }
