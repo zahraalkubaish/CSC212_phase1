@@ -1,230 +1,222 @@
-import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 /**
- * Command-line menu. This is the ONLY class that reads input or prints output.
+ * Main.java - Command-line interface for the Ride-Sharing System.
+ *
+ * This is the ONLY class that reads from the keyboard or prints to the screen.
+ * All other classes just return values, and Main decides how to display them.
+ *
+ * At startup it loads the three CSV files so the menu always has real data.
+ * Then it shows the numbered menu until the user chooses 0 (exit).
+ *
+ * Menu options assigned to this student: 1, 2, 3, 4 (rider operations).
+ * The remaining options are handled by teammates.
  */
 public class Main {
-    private static final String RIDERS_FILE = "riders_100.csv";
-    private static final String DRIVERS_FILE = "drivers_30.csv";
-    private static final String RIDES_FILE = "rides_40.csv";
 
     public static void main(String[] args) {
+
+        // Step 1: create the system and load the CSV files.
+        // Time for loadRidersFromCSV is O(m^2) where m = number of lines
+        // (each addRider is O(n) and n grows with each insertion).
         RideSharingSystem system = new RideSharingSystem();
-        Scanner sc = new Scanner(System.in);
+        if (!system.loadRidersFromCSV("riders_100.csv"))
+            System.out.println("Warning: could not open riders_100.csv.");
+        if (!system.loadDriversFromCSV("drivers_30.csv"))
+            System.out.println("Warning: could not open drivers_30.csv.");
+        if (!system.loadRidesFromCSV("rides_40.csv"))
+            System.out.println("Warning: could not open rides_40.csv.");
 
-        // Startup load: riders and drivers first, because rides refer to them
-        boolean ridersOk = system.loadRidersFromCSV(RIDERS_FILE);
-        boolean driversOk = system.loadDriversFromCSV(DRIVERS_FILE);
-        boolean ridesOk = system.loadRidesFromCSV(RIDES_FILE);
-        System.out.println("Loaded riders: " + (ridersOk ? "OK" : "FAILED")
-                + " | drivers: " + (driversOk ? "OK" : "FAILED")
-                + " | rides: " + (ridesOk ? "OK" : "FAILED"));
+        // Step 2: prepare the input reader and the choice variable.
+        Scanner input = new Scanner(System.in);
+        int choice = -1;
 
-        try {
-            int choice = -1;
-            while (choice != 0) {
-                printMenu();
-                choice = readInt(sc, "Choose an option: ");
-                System.out.println();
-                switch (choice) {
-                    case 1: listAllRiders(system); break;
-                    case 2: searchRidersByCity(system, sc); break;
-                    case 3: searchRidersByName(system, sc); break;
-                    case 4: addRiderMenu(system, sc); break;
-                    case 5: listAllDrivers(system); break;
-                    case 6: searchDriversByType(system, sc); break;
-                    case 7: addDriverMenu(system, sc); break;
-                    case 8: listAllRides(system); break;
-                    case 9: searchRidesByPickup(system, sc); break;
-                    case 10: searchRidesByRider(system, sc); break;
-                    case 11: showSharedParticipants(system, sc); break;
-                    case 12: addRideMenu(system, sc); break;
-                    case 0: System.out.println("Goodbye!"); break;
-                    default: System.out.println("Invalid option, please choose from the menu.");
-                }
+        // Step 3: main loop - keep showing the menu until the user picks 0.
+        while (choice != 0) {
+            printMenu();
+            System.out.print("Enter your choice: ");
+
+            // Read the whole line and convert it to an int.
+            // We use nextLine() to avoid the common bug of nextInt()
+            // leaving a newline in the buffer.
+            try {
+                choice = Integer.parseInt(input.nextLine().trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                continue;
             }
-        } catch (NoSuchElementException e) {
-            System.out.println("Input closed. Goodbye!");   // end of input (no more lines)
+
+            // Step 4: call the matching operation.
+            switch (choice) {
+                case 1:
+                    listAllRiders(system);
+                    break;
+                case 2:
+                    searchRidersByHomeCity(system, input);
+                    break;
+                case 3:
+                    searchRidersByName(system, input);
+                    break;
+                case 4:
+                    addRider(system, input);
+                    break;
+                case 5:
+                    // TODO: teammate - list all drivers
+                    System.out.println("(Option 5 is not implemented yet.)");
+                    break;
+                case 6:
+                    // TODO: teammate - search drivers by vehicle type
+                    System.out.println("(Option 6 is not implemented yet.)");
+                    break;
+                case 7:
+                    // TODO: teammate - add a driver
+                    System.out.println("(Option 7 is not implemented yet.)");
+                    break;
+                case 8:
+                    // TODO: teammate - list rides alphabetically
+                    System.out.println("(Option 8 is not implemented yet.)");
+                    break;
+                case 9:
+                    // TODO: teammate - search rides by pickup location
+                    System.out.println("(Option 9 is not implemented yet.)");
+                    break;
+                case 10:
+                    // TODO: teammate - search rides by rider name
+                    System.out.println("(Option 10 is not implemented yet.)");
+                    break;
+                case 11:
+                    // TODO: teammate - shared ride participants
+                    System.out.println("(Option 11 is not implemented yet.)");
+                    break;
+                case 12:
+                    // TODO: teammate - add a ride
+                    System.out.println("(Option 12 is not implemented yet.)");
+                    break;
+                case 0:
+                    System.out.println("Exiting. Goodbye!");
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
         }
+
+        input.close();
     }
 
-    // ---------------------------------------------------------------- menu and helpers
-
+    /**
+     * Prints the numbered menu exactly as required by Section 4.
+     * Time: O(1).
+     */
     private static void printMenu() {
         System.out.println();
-        System.out.println("===== Ride-Sharing System =====");
-        System.out.println("1.  List all riders");
-        System.out.println("2.  Search for riders by home city");
-        System.out.println("3.  Search for riders by name");
-        System.out.println("4.  Add a rider");
-        System.out.println("5.  List all drivers");
-        System.out.println("6.  Search for drivers by vehicle type");
-        System.out.println("7.  Add a driver");
-        System.out.println("8.  List all rides alphabetically by pickup location");
-        System.out.println("9.  Search for rides by pickup location");
-        System.out.println("10. Search for rides by rider name");
-        System.out.println("11. List the participants of a shared ride by pickup location");
-        System.out.println("12. Add a ride (private or shared)");
-        System.out.println("0.  Exit the program");
+        System.out.println("========== Ride-Sharing System ==========");
+        System.out.println("1.  List all riders.");
+        System.out.println("2.  Search for riders by home city.");
+        System.out.println("3.  Search for riders by name.");
+        System.out.println("4.  Add a rider.");
+        System.out.println("5.  List all drivers.");
+        System.out.println("6.  Search for drivers by vehicle type.");
+        System.out.println("7.  Add a driver.");
+        System.out.println("8.  List all rides alphabetically by pickup location.");
+        System.out.println("9.  Search for rides by pickup location.");
+        System.out.println("10. Search for rides by rider name.");
+        System.out.println("11. List the participants of a shared ride by pickup location.");
+        System.out.println("12. Add a ride.");
+        System.out.println("0.  Exit the program.");
+        System.out.println("=========================================");
     }
 
-    // Prints every element on its own line, or a clear message when the list is empty
-    private static <T> void printAll(LinkedList<T> list) {
+    /**
+     * Option 1: list all riders in the system, one per line.
+     * Time: O(n) where n = number of riders.
+     */
+    private static void listAllRiders(RideSharingSystem system) {
+        printRiders(system.getAllRiders(), "No riders in the system.");
+    }
+
+    /**
+     * Option 2: ask the user for a city, then print every rider from that city.
+     * Time: O(n) where n = number of riders.
+     */
+    private static void searchRidersByHomeCity(RideSharingSystem system, Scanner input) {
+        System.out.print("Enter home city: ");
+        String city = input.nextLine().trim();
+
+        LinkedList<IRider> results = system.searchRidersByHomeCity(city);
+        printRiders(results, "No riders found in that city.");
+    }
+
+    /**
+     * Option 3: ask the user for a full name, then print every matching rider.
+     * Time: O(n) where n = number of riders.
+     */
+    private static void searchRidersByName(RideSharingSystem system, Scanner input) {
+        System.out.print("Enter full name: ");
+        String name = input.nextLine().trim();
+
+        LinkedList<IRider> results = system.searchRidersByName(name);
+        printRiders(results, "No riders found with that name.");
+    }
+
+    /**
+     * Option 4: add a new rider. We collect every field from the user,
+     * build the Rider object, and call addRider.
+     * If the input is invalid (bad phone, non-numeric ID, duplicate ID),
+     * we print an error and return to the menu.
+     * Time: O(n) for the underlying add.
+     */
+    private static void addRider(RideSharingSystem system, Scanner input) {
+        try {
+            System.out.print("Enter rider ID: ");
+            int id = Integer.parseInt(input.nextLine().trim());
+
+            System.out.print("Enter full name: ");
+            String name = input.nextLine().trim();
+
+            System.out.print("Enter email: ");
+            String email = input.nextLine().trim();
+
+            System.out.print("Enter phone number (10 digits): ");
+            String phone = input.nextLine().trim();
+
+            System.out.print("Enter home city: ");
+            String city = input.nextLine().trim();
+
+            // The Rider constructor validates the phone number format
+            // and throws IllegalArgumentException if it is not exactly
+            // 10 digits.
+            IRider newRider = new Rider(id, name, email, phone, city);
+
+            if (system.addRider(newRider)) {
+                System.out.println("Rider added successfully.");
+            } else {
+                System.out.println("Failed: a rider with this ID already exists.");
+            }
+
+        } catch (NumberFormatException e) {
+            System.out.println("Failed: the ID must be a whole number.");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Helper: print a LinkedList<IRider>, one rider per line.
+     * If the list is empty, print the given message instead.
+     * Time: O(k) where k = size of the list.
+     */
+    private static void printRiders(LinkedList<IRider> list, String emptyMessage) {
         if (list.empty()) {
-            System.out.println("No results found.");
+            System.out.println(emptyMessage);
             return;
         }
+
         list.findFirst();
         while (true) {
             System.out.println(list.retrieve().toString());
             if (list.last())
                 break;
             list.findNext();
-        }
-    }
-
-    // Reads a whole line (trimmed)
-    private static String readLine(Scanner sc, String prompt) {
-        System.out.print(prompt);
-        return sc.nextLine().trim();
-    }
-
-    // Keeps asking until the user types a valid integer
-    private static int readInt(Scanner sc, String prompt) {
-        while (true) {
-            String text = readLine(sc, prompt);
-            try {
-                return Integer.parseInt(text);
-            } catch (NumberFormatException e) {
-                System.out.println("Please enter a whole number.");
-            }
-        }
-    }
-
-    // Shows the vehicle types as a numbered list and returns the chosen one
-    private static VehicleType chooseVehicleType(Scanner sc) {
-        VehicleType[] types = VehicleType.values();
-        for (int i = 0; i < types.length; i++)
-            System.out.println((i + 1) + ". " + types[i]);
-        while (true) {
-            int n = readInt(sc, "Choose vehicle type (number): ");
-            if (n >= 1 && n <= types.length)
-                return types[n - 1];
-            System.out.println("Please choose a number from the list.");
-        }
-    }
-
-    // Prints success or failure of an add operation
-    private static void printResult(boolean ok, String successText, String failText) {
-        System.out.println(ok ? successText : failText);
-    }
-
-    // ---------------------------------------------------------------- riders (options 1-4)
-
-    private static void listAllRiders(RideSharingSystem system) {
-        printAll(system.getAllRiders());
-    }
-
-    private static void searchRidersByCity(RideSharingSystem system, Scanner sc) {
-        printAll(system.searchRidersByHomeCity(readLine(sc, "Home city: ")));
-    }
-
-    private static void searchRidersByName(RideSharingSystem system, Scanner sc) {
-        printAll(system.searchRidersByName(readLine(sc, "Full name: ")));
-    }
-
-    private static void addRiderMenu(RideSharingSystem system, Scanner sc) {
-        int id = readInt(sc, "Rider ID: ");
-        String name = readLine(sc, "Full name: ");
-        String email = readLine(sc, "Email: ");
-        String phone = readLine(sc, "Phone (10 digits): ");
-        String city = readLine(sc, "Home city: ");
-        try {
-            boolean ok = system.addRider(new Rider(id, name, email, phone, city));
-            printResult(ok, "Rider added successfully.", "Failed: a rider with this ID already exists.");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Failed: " + e.getMessage());
-        }
-    }
-
-    // ---------------------------------------------------------------- drivers (options 5-7)
-
-    private static void listAllDrivers(RideSharingSystem system) {
-        printAll(system.getAllDrivers());
-    }
-
-    private static void searchDriversByType(RideSharingSystem system, Scanner sc) {
-        printAll(system.searchDriversByVehicleType(chooseVehicleType(sc)));
-    }
-
-    private static void addDriverMenu(RideSharingSystem system, Scanner sc) {
-        int id = readInt(sc, "Driver ID: ");
-        String name = readLine(sc, "Full name: ");
-        String phone = readLine(sc, "Phone (10 digits): ");
-        String plate = readLine(sc, "Vehicle plate (3 capital letters + 4 digits): ");
-        VehicleType type = chooseVehicleType(sc);
-        try {
-            boolean ok = system.addDriver(new Driver(id, name, phone, plate, type));
-            printResult(ok, "Driver added successfully.",
-                    "Failed: the driver ID or the vehicle plate already exists.");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Failed: " + e.getMessage());
-        }
-    }
-
-    // ---------------------------------------------------------------- rides (options 8-12)
-
-    private static void listAllRides(RideSharingSystem system) {
-        printAll(system.getAllRidesAlphabetically());
-    }
-
-    private static void searchRidesByPickup(RideSharingSystem system, Scanner sc) {
-        printAll(system.searchRidesByPickupLocation(readLine(sc, "Pickup location: ")));
-    }
-
-    private static void searchRidesByRider(RideSharingSystem system, Scanner sc) {
-        printAll(system.searchRidesByRiderName(readLine(sc, "Rider full name: ")));
-    }
-
-    private static void showSharedParticipants(RideSharingSystem system, Scanner sc) {
-        printAll(system.getSharedRideParticipants(readLine(sc, "Pickup location of the shared ride: ")));
-    }
-
-    private static void addRideMenu(RideSharingSystem system, Scanner sc) {
-        int type = 0;
-        while (type != 1 && type != 2) {
-            System.out.println("1. Private ride");
-            System.out.println("2. Shared ride");
-            type = readInt(sc, "Ride type: ");
-        }
-        String pickup = readLine(sc, "Pickup location: ");
-        String dropoff = readLine(sc, "Drop-off location: ");
-        DateTime pickupTime;
-        DateTime dropoffTime;
-        try {
-            pickupTime = DateTime.parse(readLine(sc, "Pickup date/time (MM/DD/YYYY HH:MM): "));
-            dropoffTime = DateTime.parse(readLine(sc, "Drop-off date/time (MM/DD/YYYY HH:MM): "));
-        } catch (IllegalArgumentException e) {
-            System.out.println("Failed: invalid date/time. Use MM/DD/YYYY HH:MM.");
-            return;
-        }
-        int driverId = readInt(sc, "Driver ID: ");
-        String failText = "Failed: check that the rider(s) and driver exist, the times are valid "
-                + "and the ride does not overlap another ride.";
-        if (type == 1) {
-            int riderId = readInt(sc, "Rider ID: ");
-            printResult(system.schedulePrivateRide(pickup, pickupTime, dropoffTime, dropoff, riderId, driverId),
-                    "Private ride scheduled successfully.", failText);
-        } else {
-            int count = 0;
-            while (count < 2)
-                count = readInt(sc, "Number of riders (at least 2): ");
-            int[] riderIds = new int[count];
-            for (int i = 0; i < count; i++)
-                riderIds[i] = readInt(sc, "Rider ID #" + (i + 1) + ": ");
-            printResult(system.scheduleSharedRide(pickup, pickupTime, dropoffTime, dropoff, riderIds, driverId),
-                    "Shared ride scheduled successfully.", failText);
         }
     }
 }
