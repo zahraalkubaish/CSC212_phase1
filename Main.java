@@ -71,23 +71,23 @@ public class Main {
                     break;
                 case 8:
                     // TODO: teammate - list rides alphabetically
-                    System.out.println("(Option 8 is not implemented yet.)");
+                    listAllRides(system);
                     break;
                 case 9:
                     // TODO: teammate - search rides by pickup location
-                    System.out.println("(Option 9 is not implemented yet.)");
+                    searchRidesByPickupLocation(system, input);
                     break;
                 case 10:
                     // TODO: teammate - search rides by rider name
-                    System.out.println("(Option 10 is not implemented yet.)");
+                    searchRidesByRiderName(system, input);
                     break;
                 case 11:
                     // TODO: teammate - shared ride participants
-                    System.out.println("(Option 11 is not implemented yet.)");
+                    listSharedRideParticipants(system, input);
                     break;
                 case 12:
                     // TODO: teammate - add a ride
-                    System.out.println("(Option 12 is not implemented yet.)");
+                    addRide(system, input);
                     break;
                 case 0:
                     System.out.println("Exiting. Goodbye!");
@@ -296,7 +296,8 @@ public class Main {
             System.out.println(emptyMessage);
             return;
         }
- 
+
+      
         list.findFirst();
         while (true) {
             System.out.println(list.retrieve().toString());
@@ -305,5 +306,23 @@ public class Main {
             list.findNext();
         }
     }  
-    
+    /**
+     * Helper: print a LinkedList<IRide>, one ride per line.
+     * If the list is empty, print the given message instead.
+     * Time: O(n * k) because a shared ride's toString lists its k riders.
+     */
+    private static void printRides(LinkedList<IRide> list, String emptyMessage) {
+        if (list.empty()) {
+            System.out.println(emptyMessage);
+            return;
+        }
+ 
+        list.findFirst();
+        while (true) {
+            System.out.println(list.retrieve().toString());
+            if (list.last())
+                break;
+            list.findNext();
+        }
+    }
 }
