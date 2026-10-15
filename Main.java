@@ -70,23 +70,18 @@ public class Main {
                     addDriver(system, input);
                     break;
                 case 8:
-                    // TODO: teammate - list rides alphabetically
                     listAllRides(system);
                     break;
                 case 9:
-                    // TODO: teammate - search rides by pickup location
                     searchRidesByPickupLocation(system, input);
                     break;
                 case 10:
-                    // TODO: teammate - search rides by rider name
                     searchRidesByRiderName(system, input);
                     break;
                 case 11:
-                    // TODO: teammate - shared ride participants
                     listSharedRideParticipants(system, input);
                     break;
                 case 12:
-                    // TODO: teammate - add a ride
                     addRide(system, input);
                     break;
                 case 0:
