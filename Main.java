@@ -61,16 +61,13 @@ public class Main {
                     addRider(system, input);
                     break;
                 case 5:
-                    // TODO: teammate - list all drivers
-                    System.out.println("(Option 5 is not implemented yet.)");
+                    listAllDrivers(system);
                     break;
                 case 6:
-                    // TODO: teammate - search drivers by vehicle type
-                    System.out.println("(Option 6 is not implemented yet.)");
+                    searchDriversByVehicleType(system, input);
                     break;
                 case 7:
-                    // TODO: teammate - add a driver
-                    System.out.println("(Option 7 is not implemented yet.)");
+                    addDriver(system, input);
                     break;
                 case 8:
                     // TODO: teammate - list rides alphabetically
@@ -219,4 +216,94 @@ public class Main {
             list.findNext();
         }
     }
+    //Option 5: list all drivers in the system, one per line.
+    private static void listAllDrivers(RideSharingSystem system) {
+        printDrivers(system.getAllDrivers(), "No drivers in the system.");
+    }
+//Option 6: ask the user for a vehicle type, then print every driver with that type. An unknown type prints an error instead.
+    private static void searchDriversByVehicleType(RideSharingSystem system, Scanner input) {
+        System.out.print("Enter vehicle type (SEDAN, LUXURY_SEDAN, SUV, VAN): ");
+        String text = input.nextLine();
+ 
+        try {
+            VehicleType type = parseVehicleType(text);
+            LinkedList<IDriver> results = system.searchDriversByVehicleType(type);
+            printDrivers(results, "No drivers found with that vehicle type.");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Failed: " + e.getMessage());
+        }
+    }
+/*  Option 7: add a new driver. We collect every field from the user,
+      build the Driver object, and call addDriver.
+      If the input is invalid (non-numeric ID, bad phone, bad plate,
+      unknown vehicle type) or the ID or plate already exists, we print
+      a clear message and return to the menu.*/
+      
+    private static void addDriver(RideSharingSystem system, Scanner input) {
+        try {
+            System.out.print("Enter driver ID: ");
+            int id = Integer.parseInt(input.nextLine().trim());
+ 
+            System.out.print("Enter full name: ");
+            String name = input.nextLine().trim();
+ 
+            System.out.print("Enter phone number (10 digits): ");
+            String phone = input.nextLine().trim();
+ 
+            System.out.print("Enter vehicle plate (3 uppercase letters + 4 digits, e.g. ABC1234): ");
+            String plate = input.nextLine().trim();
+ 
+            System.out.print("Enter vehicle type (SEDAN, LUXURY_SEDAN, SUV, VAN): ");
+            VehicleType type = parseVehicleType(input.nextLine());
+ 
+            // The Driver constructor validates the phone number and the plate
+            // and throws IllegalArgumentException if either one is invalid.
+            IDriver newDriver = new Driver(id, name, phone, plate, type);
+ 
+            if (system.addDriver(newDriver)) {
+                System.out.println("Driver added successfully.");
+            } else {
+                System.out.println("Failed: a driver with this ID or vehicle plate already exists.");
+            }
+ 
+        } catch (NumberFormatException e) {
+            // NumberFormatException is a kind of IllegalArgumentException,
+            // so this catch must come first.
+            System.out.println("Failed: the ID must be a whole number.");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Failed: " + e.getMessage());
+        }
+    }
+
+    
+    /* Helper: turn the user's text into a VehicleType.
+       Accepts "SUV", "suv", "luxury sedan", "LUXURY_SEDAN"
+       Throws IllegalArgumentException if the text is not a valid type.*/
+    private static VehicleType parseVehicleType(String text) {
+        String normalized = text.trim().toUpperCase().replace(' ', '_').replace('-', '_');
+        try {
+            return VehicleType.valueOf(normalized);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid vehicle type. Choose SEDAN, LUXURY_SEDAN, SUV or VAN.");
+        }
+    }
+   
+   
+    /*Helper: print a LinkedList<IDriver>, one driver per line.
+      If the list is empty, print the given message instead*/
+  private static void printDrivers(LinkedList<IDriver> list, String emptyMessage) {
+        if (list.empty()) {
+            System.out.println(emptyMessage);
+            return;
+        }
+ 
+        list.findFirst();
+        while (true) {
+            System.out.println(list.retrieve().toString());
+            if (list.last())
+                break;
+            list.findNext();
+        }
+    }  
+    
 }
