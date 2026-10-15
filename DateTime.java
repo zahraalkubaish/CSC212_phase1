@@ -48,13 +48,19 @@ public class DateTime implements IDateTime {
         else
             return "" + n;
     }
-    
+
+    // ===== format() =====
+    // Returns this date/time as "MM/DD/YYYY HH:MM", e.g. "12/20/2026 02:00"
         @Override
     public String format() {
         return twoDigits(month) + "/" + twoDigits(day) + "/" + year
              + " " + twoDigits(hour) + ":" + twoDigits(minute);
     }
-    
+
+
+    // ===== compareTo() =====
+    // Compares chronologically, field by field: year, month, day, hour, minute.
+    // Returns -1 if this is earlier, 1 if this is later, 0 if exactly equal.
         @Override
     public int compareTo(IDateTime other) {
         if (this.year < other.getYear()) return -1;
@@ -78,6 +84,12 @@ public class DateTime implements IDateTime {
     public String toString() {
         return format();
 }
+
+     // ===== parse() =====
+    // Builds a DateTime from text in the format "MM/DD/YYYY HH:MM",
+    // e.g. "10/28/2026 08:45". Used when loading rides from the CSV file.
+    // Throws IllegalArgumentException if the text is not in that format,
+    // so the caller can skip the bad line.
     public static DateTime parse(String text) {
         if (text == null)
             throw new IllegalArgumentException("Date/time text is null");
