@@ -325,4 +325,135 @@ public class Main {
             list.findNext();
         }
     }
+
+    
+    /**
+     * Option 8: list every ride, sorted alphabetically by pickup location.
+     * Time: O(n) where n = number of rides (the list is already sorted).
+     */
+    private static void listAllRides(RideSharingSystem system) {
+        printRides(system.getAllRidesAlphabetically(), "No rides in the system.");
+    }
+
+    /**
+     * Option 9: ask for a pickup location, then print every ride from there.
+     * Time: O(n) where n = number of rides.
+     */
+    private static void searchRidesByPickupLocation(RideSharingSystem system, Scanner input) {
+        System.out.print("Enter pickup location: ");
+        String location = input.nextLine().trim();
+
+        LinkedList<IRide> results = system.searchRidesByPickupLocation(location);
+        printRides(results, "No rides found from that pickup location.");
+    }
+
+    /**
+     * Option 10: ask for a rider's full name, then print every ride they are on.
+     * Time: O(n * k) where n = number of rides, k = riders per shared ride.
+     */
+    private static void searchRidesByRiderName(RideSharingSystem system, Scanner input) {
+        System.out.print("Enter rider full name: ");
+        String name = input.nextLine().trim();
+
+        LinkedList<IRide> results = system.searchRidesByRiderName(name);
+        printRides(results, "No rides found for that rider.");
+    }
+
+    /**
+     * Option 11: ask for a pickup location, then print the riders of every
+     * shared ride from that location (each rider printed once).
+     * The result is a list of riders, so we reuse printRiders.
+     */
+    private static void listSharedRideParticipants(RideSharingSystem system, Scanner input) {
+        System.out.print("Enter pickup location: ");
+        String location = input.nextLine().trim();
+
+        LinkedList<IRider> results = system.getSharedRideParticipants(location);
+        printRiders(results, "No shared ride participants found at that pickup location.");
+    }
+
+    /**
+     * Option 12: add a ride.
+     * First asks whether the ride is private or shared, then asks for the
+     * fields that type needs and calls schedulePrivateRide or scheduleSharedRide.
+     * Bad input (wrong date format, non-numeric ID, ...) prints an error and
+     * returns to the menu. A scheduling conflict or a missing rider/driver
+     * makes the schedule method return false, and we report the failure.
+     */
+    private static void addRide(RideSharingSystem system, Scanner input) {
+        System.out.print("Is the ride private or shared? (P/S): ");
+        String type = input.nextLine().trim().toUpperCase();
+
+        boolean isPrivate = type.equals("P") || type.equals("PRIVATE");
+        boolean isShared = type.equals("S") || type.equals("SHARED");
+        if (!isPrivate && !isShared) {
+            System.out.println("Failed: please enter P for private or S for shared.");
+            return;
+        }
+
+        try {
+            // Fields that both ride types need
+            System.out.print("Enter pickup location: ");
+            String pickupLocation = input.nextLine().trim();
+
+            System.out.print("Enter pickup date/time (MM/DD/YYYY HH:MM): ");
+            IDateTime pickupTime = DateTime.parse(input.nextLine());
+
+            System.out.print("Enter drop-off date/time (MM/DD/YYYY HH:MM): ");
+            IDateTime dropoffTime = DateTime.parse(input.nextLine());
+
+            System.out.print("Enter drop-off location: ");
+            String dropoffLocation = input.nextLine().trim();
+
+            System.out.print("Enter driver ID: ");
+            int driverId = Integer.parseInt(input.nextLine().trim());
+
+            boolean success;
+            if (isPrivate) {
+                // A private ride has exactly one rider
+                System.out.print("Enter rider ID: ");
+                int riderId = Integer.parseInt(input.nextLine().trim());
+
+                success = system.schedulePrivateRide(pickupLocation, pickupTime,
+                        dropoffTime, dropoffLocation, riderId, driverId);
+            } else {
+                // A shared ride has more than one rider
+                System.out.print("Enter rider IDs separated by commas (e.g. 12,40,7): ");
+                int[] riderIds = parseIds(input.nextLine());
+                if (riderIds.length < 2) {
+                    System.out.println("Failed: a shared ride needs more than one rider.");
+                    return;
+                }
+
+                success = system.scheduleSharedRide(pickupLocation, pickupTime,
+                        dropoffTime, dropoffLocation, riderIds, driverId);
+            }
+
+            if (success)
+                System.out.println("Ride added successfully.");
+            else
+                System.out.println("Failed: rider or driver not found, invalid times, "
+                        + "or the ride conflicts with an existing ride.");
+
+        } catch (NumberFormatException e) {
+            // must come before IllegalArgumentException (it is a subclass of it)
+            System.out.println("Failed: IDs must be whole numbers.");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Failed: " + e.getMessage()
+                    + ". Use the format MM/DD/YYYY HH:MM.");
+        }
+    }
+
+    /**
+     * Helper: turns text like "12, 40,7" into the array {12, 40, 7}.
+     * Throws NumberFormatException if any piece is not a whole number.
+     * Time: O(m) where m = number of IDs typed.
+     */
+    private static int[] parseIds(String text) {
+        String[] pieces = text.trim().split(",");
+        int[] ids = new int[pieces.length];
+        for (int i = 0; i < pieces.length; i++)
+            ids[i] = Integer.parseInt(pieces[i].trim());
+        return ids;
+    }
 }
