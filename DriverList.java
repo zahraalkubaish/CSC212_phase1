@@ -92,8 +92,6 @@ public class DriverList implements IDriverList {
       if (lastDriver.getName().equals(fullName))
          result.insert(lastDriver);            
    
-      
-      
       return result;
    
    }
@@ -117,7 +115,8 @@ public class DriverList implements IDriverList {
       return null;
    }
 
-      // Returns all drivers with this vehicle type (empty list if none).  
+      // Returns all drivers with this vehicle type (empty list if none). 
+   public LinkedList<IDriver> findByVehicleType(VehicleType vehicleType){
       LinkedList<IDriver> result = new LinkedList<IDriver>();
    
       if (vehicleType == null || drivers.empty())
