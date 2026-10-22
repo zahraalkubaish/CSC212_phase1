@@ -304,7 +304,7 @@ public class Main {
     /**
      * Helper: print a LinkedList<IRide>, one ride per line.
      * If the list is empty, print the given message instead.
-     * Time: O(n * k) because a shared ride's toString lists its k riders.
+    Time: O(k * p) where k = rides printed, p = riders per shared ride.
      */
     private static void printRides(LinkedList<IRide> list, String emptyMessage) {
         if (list.empty()) {
@@ -324,7 +324,7 @@ public class Main {
     
     /**
      * Option 8: list every ride, sorted alphabetically by pickup location.
-     * Time: O(n) where n = number of rides (the list is already sorted).
+     *Time: O(R * p): getAllRidesAlphabetically O(R) + printRides O(R * p).
      */
     private static void listAllRides(RideSharingSystem system) {
         printRides(system.getAllRidesAlphabetically(), "No rides in the system.");
@@ -332,7 +332,7 @@ public class Main {
 
     /**
      * Option 9: ask for a pickup location, then print every ride from there.
-     * Time: O(n) where n = number of rides.
+     *Time: O(R * p): findByPickupLocation O(R) + printRides O(k * p), k <= R.
      */
     private static void searchRidesByPickupLocation(RideSharingSystem system, Scanner input) {
         System.out.print("Enter pickup location: ");
@@ -344,7 +344,7 @@ public class Main {
 
     /**
      * Option 10: ask for a rider's full name, then print every ride they are on.
-     * Time: O(n * k) where n = number of rides, k = riders per shared ride.
+     * Time: O(R * p): findByRiderName O(R * p) + printRides O(k * p).
      */
     private static void searchRidesByRiderName(RideSharingSystem system, Scanner input) {
         System.out.print("Enter rider full name: ");
@@ -358,6 +358,7 @@ public class Main {
      * Option 11: ask for a pickup location, then print the riders of every
      * shared ride from that location (each rider printed once).
      * The result is a list of riders, so we reuse printRiders.
+     * Time: O(R + P^2) where P = total participants at that location.
      */
     private static void listSharedRideParticipants(RideSharingSystem system, Scanner input) {
         System.out.print("Enter pickup location: ");
@@ -374,6 +375,7 @@ public class Main {
      * Bad input (wrong date format, non-numeric ID, ...) prints an error and
      * returns to the menu. A scheduling conflict or a missing rider/driver
      * makes the schedule method return false, and we report the failure.
+     * Time: O(d + s * (n + R + s)) for a shared ride, O(n + d + R) for a private ride.
      */
     private static void addRide(RideSharingSystem system, Scanner input) {
         System.out.print("Is the ride private or shared? (P/S): ");
@@ -442,7 +444,7 @@ public class Main {
     /**
      * Helper: turns text like "12, 40,7" into the array {12, 40, 7}.
      * Throws NumberFormatException if any piece is not a whole number.
-     * Time: O(m) where m = number of IDs typed.
+     * Time: O(s) where s = number of IDs typed..
      */
     private static int[] parseIds(String text) {
         String[] pieces = text.trim().split(",");
