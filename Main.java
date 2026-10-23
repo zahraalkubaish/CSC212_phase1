@@ -9,8 +9,6 @@ import java.util.Scanner;
  * At startup it loads the three CSV files so the menu always has real data.
  * Then it shows the numbered menu until the user chooses 0 (exit).
  *
- * Menu options assigned to this student: 1, 2, 3, 4 (rider operations).
- * The remaining options are handled by teammates.
  */
 public class Main {
 
