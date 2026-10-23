@@ -7,11 +7,11 @@ public class DateTime implements IDateTime {
     private final int hour;
     private final int minute;
 
-  // ===== Constructor =====
+ // ===== Constructor =====
     public DateTime(int year, int month, int day, int hour, int minute) {
         if (month < 1 || month > 12 || day < 1 || day > 31
                 || hour < 0 || hour > 23 || minute < 0 || minute > 59)
-            throw new IllegalArgumentException("Invalid date/time values");
+            throw new IllegalArgumentException("Date or time values out of valid range");
         this.year = year;
         this.month = month;
         this.day = day;
